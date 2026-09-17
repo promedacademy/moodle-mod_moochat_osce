@@ -212,7 +212,7 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         updateObjectivesPanel(response, newlyMet);
 
                         // If any newly met, show a brief notification in chat.
-                        if (newlyMet.length > 0) {
+                        if (!osceMode && newlyMet.length > 0) {
                             newlyMet.forEach(function(idx) {
                                 var obj = response.results.find(function(r) { return r.index === idx; });
                                 if (obj) {
