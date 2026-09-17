@@ -428,6 +428,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                         metcount: 0, totalcount: 0, bestscore: 0
                     }, []);
                 }
+                if (sessionTimer) {
+                    clearInterval(sessionTimer);
+                    sessionTimer = null;
+                }
+                
+                sessionEnded = false;
+                sessionEndTime = 0;
+                
+                if (timerDiv.length) {
+                    timerDiv.hide();
+                    timerDiv.text('');
+                }
+                
             };
             var formatTime = function(seconds) {
 
