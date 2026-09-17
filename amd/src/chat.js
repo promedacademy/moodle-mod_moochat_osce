@@ -104,6 +104,18 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 if (!objectivesDiv.length || !data) {
                     return;
                 }
+                if (osceMode) {
+                    /*
+                     * In formal OSCE mode the candidate must not see:
+                     * - objectives
+                     * - score
+                     * - progress
+                     * - newly unlocked objectives
+                     */
+                    objectivesDiv.hide();
+                
+                    return;
+                }
 
                 // Filter to only met objectives.
                 var metResults = data.results ? data.results.filter(function(r) { return r.met; }) : [];
@@ -272,8 +284,9 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     methodname: 'mod_moochat_send_message',
                     args: {
                         moochatid: moochatid,
-                        message:   message,
-                        history:   JSON.stringify(conversationHistory)
+                        message: message,
+                        history: JSON.stringify(conversationHistory),
+                        sessionid: sessionId
                     }
                 }])[0].then(function(response) {
                     $('#' + thinkingId).remove();
@@ -311,6 +324,19 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
 
                         // Update remaining questions.
                         if (response.remaining !== undefined) {
+                            if (response.sessionended === true) {
+                                endOSCESession(
+                                    response.endreason || 'unknown'
+                                );
+                            }
+                        
+                        if (response.sessionremaining !== undefined && response.sessionremaining >= 0) {
+                            if (!sessionEndTime && osceMode) {
+                                sessionEndTime = Date.now() + (response.sessionremaining * 1000);
+                        
+                                startOSCESessionTimer();
+                            }
+                        }
                             remainingQuestions = response.remaining;
                             updateRemaining(remainingQuestions);
                             if (remainingQuestions === 0) {
