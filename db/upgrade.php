@@ -154,6 +154,49 @@ function xmldb_moochat_upgrade($oldversion) {
         upgrade_mod_savepoint(true, 2026041603, 'moochat');
     }
 
+    // -----------------------------------------------------------------
+    // 2026091700 - Add OSCE mode and session time limit.
+    // -----------------------------------------------------------------
+    if ($oldversion < 2026091700) {
+    
+        $table = new xmldb_table('moochat');
+    
+        $field = new xmldb_field(
+            'osce_mode',
+            XMLDB_TYPE_INTEGER,
+            '1',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '0',
+            'completionmessages'
+        );
+    
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+    
+        $field = new xmldb_field(
+            'sessiontimelimit',
+            XMLDB_TYPE_INTEGER,
+            '10',
+            null,
+            XMLDB_NOTNULL,
+            null,
+            '300',
+            'osce_mode'
+        );
+    
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+    
+        upgrade_mod_savepoint(
+            true,
+            2026091700,
+            'moochat'
+        );
+    }
     return true;
 
     return true;
