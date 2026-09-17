@@ -135,6 +135,21 @@ class mod_moochat_mod_form extends moodleform_mod {
         $this->standard_grading_coursemodule_elements();
         $mform->setDefault('grade[modgrade_type]', 'none');
 
+        $mform->addElement('advcheckbox','osce_mode','OSCE mode');
+
+        $mform->addHelpButton('osce_mode','osce_mode','moochat');
+
+        $mform->setDefault('osce_mode',0);
+        
+        $mform->addElement('select','sessiontimelimit','OSCE session time limit',[0   => 'No time limit',180 => '3 minutes',240 => '4 minutes',300 => '5 minutes',360 => '6 minutes',420 => '7 minutes',600 => '10 minutes',]);
+        
+        $mform->addHelpButton('sessiontimelimit','sessiontimelimit','moochat');
+        
+        $mform->setDefault('sessiontimelimit',300);
+        
+        $mform->hideIf('sessiontimelimit','osce_mode','eq',0);
+        
+        
         // ---------------------------------------------------------------
         // Rate Limiting section.
         // ---------------------------------------------------------------
