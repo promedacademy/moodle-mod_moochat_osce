@@ -47,11 +47,12 @@
     {{/avatarurl}}
     
     <div class="moochat-chat-area">
-        <div class="moochat-interface {{sizeclass}}" id="moochat-{{moochatid}}">
+        <div class="moochat-interface {{sizeclass}}" id="moochat-{{moochatid}}" data-osce-mode="{{osce_mode}}" data-session-time-limit="{{sessiontimelimit}}"
+    data-max-messages="{{maxmessages}}">
             <div class="moochat-messages" id="moochat-messages-{{moochatid}}">
                 <p class="moochat-welcome">{{startchat}}</p>
             </div>
-            
+            <div id="moochat-osce-timer-{{moochatid}}" class="moochat-osce-timer" style="display:none;"></div>
             <div class="moochat-input-area">
                 <textarea id="moochat-input-{{moochatid}}" class="moochat-input" placeholder="{{typemessage}}" rows="3"></textarea>
                 
