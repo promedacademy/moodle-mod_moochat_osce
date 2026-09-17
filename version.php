@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_moochat';
 $plugin->requires  = 2024042200; // Moodle 4.4+
-$plugin->version   = 2026042801; // Added activity completion with minimum interactions rule
+$plugin->version   = 2026091700;
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = 'v1.8.2';
+$plugin->release   = 'v1.9.0-osce';
