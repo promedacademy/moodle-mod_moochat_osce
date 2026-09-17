@@ -246,6 +246,13 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                 if (message === '') {
                     return;
                 }
+                if (sessionEnded) {
+                        return;
+                }            
+
+                if (osceMode && conversationHistory.length === 0) {
+                    startOSCESessionTimer();
+                }
 
                 inputField.prop('disabled', true);
                 sendButton.prop('disabled', true);
