@@ -230,51 +230,157 @@ function moochat_get_user_grades($moochat, $userid = 0) {
 }
 
 /**
- * Calculate a user's best-session grade (highest score across all sessions).
+ * Calculate a user's best-session grade.
+ *
+ * Supports weighted OSCE objectives.
  */
 function moochat_calculate_grade($moochat, $userid) {
     global $DB;
-    if (empty($moochat->objectives) || $moochat->grade == 0) {
+
+    if (
+        empty($moochat->objectives) ||
+        $moochat->grade == 0
+    ) {
         return null;
     }
-    $objectives = moochat_parse_objectives($moochat->objectives);
-    $total      = count($objectives);
-    if ($total === 0) {
+
+    $objectives = moochat_parse_objectives(
+        $moochat->objectives,
+        $moochat->pointsperobj ?? 1
+    );
+
+    if (empty($objectives)) {
         return null;
     }
-    $sql = "SELECT sessionid, COUNT(*) AS metcount
-              FROM {moochat_objective_results}
-             WHERE moochatid = :moochatid AND userid = :userid AND met = 1
-             GROUP BY sessionid
-             ORDER BY metcount DESC";
-    $rows = $DB->get_records_sql($sql, ['moochatid' => $moochat->id, 'userid' => $userid], 0, 1);
-    if (empty($rows)) {
-        $bestmet = 0;
-    } else {
-        $best    = reset($rows);
-        $bestmet = (int)$best->metcount;
+
+    $records = $DB->get_records(
+        'moochat_objective_results',
+        [
+            'moochatid' => $moochat->id,
+            'userid' => $userid,
+            'met' => 1,
+        ]
+    );
+
+    $sessions = [];
+
+    foreach ($records as $record) {
+
+        if (!isset($sessions[$record->sessionid])) {
+            $sessions[$record->sessionid] = [];
+        }
+
+        $sessions[$record->sessionid][
+            (int)$record->objectiveindex
+        ] = true;
     }
-    $grade           = new stdClass();
-    $grade->userid   = $userid;
-    $grade->rawgrade = round(($bestmet / $total) * $moochat->grade, 2);
+
+    $bestscore = 0;
+
+    foreach ($sessions as $sessionid => $met) {
+
+        $metweight = 0;
+
+        foreach ($met as $index => $unused) {
+
+            if (isset($objectives[$index])) {
+                $metweight +=
+                    (float)$objectives[$index]['weight'];
+            }
+        }
+
+        $score = moochat_normalize_objective_score(
+            $metweight,
+            $objectives,
+            $moochat->grade
+        );
+
+        $bestscore = max($bestscore, $score);
+    }
+
+    $grade = new stdClass();
+    $grade->userid = $userid;
+    $grade->rawgrade = $bestscore;
+
     return $grade;
 }
 
 /**
- * Parse objectives text into an array (one per non-empty line).
+ * Parse learning objectives.
+ *
+ * Supported formats:
+ *
+ * [5] Professional introduction
+ * [10] Presenting complaint
+ *
+ * or legacy:
+ *
+ * Professional introduction
+ * Presenting complaint
+ *
+ * Legacy objectives use pointsperobj.
+ *
+ * @param string $objectivesraw
+ * @param int $defaultweight
+ * @return array
  */
-function moochat_parse_objectives($objectivesraw) {
+function moochat_parse_objectives(
+    $objectivesraw,
+    $defaultweight = 1
+) {
+
     if (empty($objectivesraw)) {
         return [];
     }
-    $lines = preg_split('/\r?\n/', $objectivesraw);
-    $out   = [];
+
+    $lines = preg_split(
+        '/\r?\n/',
+        $objectivesraw
+    );
+
+    $out = [];
+
     foreach ($lines as $line) {
+
         $line = trim($line);
-        if ($line !== '') {
-            $out[] = $line;
+
+        if ($line === '') {
+            continue;
         }
+
+        $weight = (float)$defaultweight;
+        $text = $line;
+
+        /*
+         * Weighted syntax:
+         *
+         * [5] Professional introduction
+         */
+        if (
+            preg_match(
+                '/^\[\s*(\d+(?:\.\d+)?)\s*\]\s*(.+)$/',
+                $line,
+                $matches
+            )
+        ) {
+
+            $weight = (float)$matches[1];
+            $text = trim($matches[2]);
+        }
+
+        /*
+         * Never allow zero/negative objective weights.
+         */
+        if ($weight <= 0) {
+            $weight = 1;
+        }
+
+        $out[] = [
+            'text' => $text,
+            'weight' => $weight,
+        ];
     }
+
     return $out;
 }
 
@@ -543,4 +649,106 @@ function moochat_get_section_content($courseid, $sectionnum, $includehidden = fa
 
     $content .= "\n=== END COURSE SECTION CONTENT ===\n\n";
     return $content;
+}
+
+
+/**
+ * Return total objective weight.
+ */
+function moochat_total_objective_weight($objectives) {
+
+    $total = 0;
+
+    foreach ($objectives as $objective) {
+        $total += (float)$objective['weight'];
+    }
+
+    return $total;
+}
+
+
+/**
+ * Convert achieved objective weight into the activity grade.
+ *
+ * Example:
+ *
+ * Total weights = 100
+ * Achieved = 75
+ * Grade = 100
+ *
+ * Result = 75.
+ */
+function moochat_normalize_objective_score(
+    $achievedweight,
+    $objectives,
+    $grademax
+) {
+
+    $totalweight =
+        moochat_total_objective_weight(
+            $objectives
+        );
+
+    if (
+        $totalweight <= 0 ||
+        $grademax <= 0
+    ) {
+        return 0;
+    }
+
+    return round(
+        ($achievedweight / $totalweight) * $grademax,
+        2
+    );
+}
+
+
+/**
+ * Calculate current session score.
+ */
+function moochat_calculate_session_score(
+    $moochat,
+    $objectives,
+    $userid,
+    $sessionid
+) {
+
+    global $DB;
+
+    if (
+        empty($sessionid) ||
+        empty($objectives)
+    ) {
+        return 0;
+    }
+
+    $records = $DB->get_records(
+        'moochat_objective_results',
+        [
+            'moochatid' => $moochat->id,
+            'userid' => $userid,
+            'sessionid' => $sessionid,
+            'met' => 1,
+        ]
+    );
+
+    $achievedweight = 0;
+
+    foreach ($records as $record) {
+
+        $index =
+            (int)$record->objectiveindex;
+
+        if (isset($objectives[$index])) {
+
+            $achievedweight +=
+                (float)$objectives[$index]['weight'];
+        }
+    }
+
+    return moochat_normalize_objective_score(
+        $achievedweight,
+        $objectives,
+        $moochat->grade
+    );
 }
