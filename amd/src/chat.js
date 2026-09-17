@@ -392,7 +392,101 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
                     }, []);
                 }
             };
+            var formatTime = function(seconds) {
 
+    seconds = Math.max(
+        0,
+        parseInt(seconds, 10) || 0
+    );
+
+    var minutes =
+        Math.floor(seconds / 60);
+
+    var secs =
+        seconds % 60;
+
+    return (
+        String(minutes).padStart(2, '0') +
+        ':' +
+        String(secs).padStart(2, '0')
+    );
+};
+
+
+var endOSCESession = function(reason) {
+
+    if (sessionEnded) {
+        return;
+    }
+
+    sessionEnded = true;
+
+    if (sessionTimer) {
+        clearInterval(sessionTimer);
+        sessionTimer = null;
+    }
+
+    inputField.prop('disabled', true);
+    sendButton.prop('disabled', true);
+
+    if (timerDiv.length) {
+
+        timerDiv
+            .removeClass('alert-info')
+            .addClass('alert-danger');
+
+        timerDiv.text(
+            reason === 'time'
+                ? 'OSCE station ended — time expired'
+                : 'OSCE station ended'
+        );
+    }
+};
+
+
+var startOSCESessionTimer = function() {
+
+    if (
+        !osceMode ||
+        sessionTimeLimit <= 0 ||
+        sessionEndTime > 0
+    ) {
+        return;
+    }
+
+    sessionEndTime =
+        Date.now() +
+        (sessionTimeLimit * 1000);
+
+    if (timerDiv.length) {
+        timerDiv.show();
+    }
+
+    sessionTimer =
+        setInterval(function() {
+
+            var remaining =
+                Math.ceil(
+                    (sessionEndTime - Date.now()) /
+                    1000
+                );
+
+            if (remaining <= 0) {
+
+                timerDiv.text('00:00');
+
+                endOSCESession('time');
+
+                return;
+            }
+
+            timerDiv.text(
+                'Time remaining: ' +
+                formatTime(remaining)
+            );
+
+        }, 250);
+};
             // ------------------------------------------------------------------
             // Event handlers.
             // ------------------------------------------------------------------
