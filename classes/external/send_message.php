@@ -172,6 +172,65 @@ class send_message extends external_api {
                     ? $moochat->systemprompt
                     : get_string('defaultprompt', 'moochat');
 
+        
+                    /*
+             * Server-side OSCE timer.
+             *
+             * The first saved user message defines the session start.
+             * This prevents the browser timer from being the only enforcement.
+             */
+            $sessionid = clean_param(
+                $params['sessionid'] ?? '',
+                PARAM_ALPHANUMEXT
+            );
+            
+            $sessionremaining = -1;
+            
+            if (
+                !empty($moochat->osce_mode) &&
+                !empty($moochat->sessiontimelimit) &&
+                !empty($sessionid)
+            ) {
+            
+                $sessionstart = $DB->get_field_sql(
+                    "SELECT MIN(timecreated)
+                       FROM {moochat_conversations}
+                      WHERE moochatid = ?
+                        AND userid = ?
+                        AND sessionid = ?
+                        AND role = 'user'",
+                    [
+                        $moochatid,
+                        $USER->id,
+                        $sessionid
+                    ]
+                );
+            
+                if ($sessionstart) {
+            
+                    $elapsed =
+                        time() - (int)$sessionstart;
+            
+                    $sessionremaining =
+                        max(
+                            0,
+                            (int)$moochat->sessiontimelimit -
+                            $elapsed
+                        );
+            
+                    if ($sessionremaining <= 0) {
+            
+                        return [
+                            'success' => false,
+                            'error' => 'The OSCE station time has expired.',
+                            'remaining' => 0,
+                            'sessionremaining' => 0,
+                            'sessionended' => true,
+                            'endreason' => 'time',
+                        ];
+                    }
+                }
+            }
         // ------------------------------------------------------------------
         // Uploaded content files — extract text and inject into prompt.
         // ------------------------------------------------------------------
@@ -268,9 +327,12 @@ class send_message extends external_api {
                 }
 
                 return [
-                    'success'   => true,
-                    'reply'     => trim($reply),
-                    'remaining' => $remaining,
+                            'success' => true,
+                            'reply' => trim($reply),
+                            'remaining' => $remaining,
+                            'sessionremaining' => $sessionremaining,
+                            'sessionended' => false,
+                            'endreason' => '',
                 ];
             } else {
                 return [
@@ -293,6 +355,9 @@ class send_message extends external_api {
             'reply'     => new external_value(PARAM_RAW,  'The AI reply',                       VALUE_OPTIONAL),
             'error'     => new external_value(PARAM_TEXT, 'Error message if any',               VALUE_OPTIONAL),
             'remaining' => new external_value(PARAM_INT,  'Remaining questions (-1 unlimited)', VALUE_OPTIONAL),
+            'sessionremaining' => new external_value(PARAM_INT,'Remaining OSCE session seconds',VALUE_OPTIONAL),
+            'sessionended' => new external_value(PARAM_BOOL,'Whether the OSCE session has ended',VALUE_OPTIONAL),
+            'endreason' => new external_value(PARAM_TEXT,'Reason for session ending',VALUE_OPTIONAL),
         ]);
     }
 }
