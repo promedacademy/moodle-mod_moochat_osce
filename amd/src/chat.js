@@ -534,7 +534,18 @@ var startOSCESessionTimer = function() {
 
             clearButton.on('click', function() {
                 if (confirm(strings[6] || 'Clear all messages?')) {
-                    clearChat();
+                    clearChat(if (sessionTimer) {
+                            clearInterval(sessionTimer);
+                            sessionTimer = null;
+                        }
+                        
+                        sessionEnded = false;
+                        sessionEndTime = 0;
+                        
+                        if (timerDiv.length) {
+                            timerDiv.hide();
+                            timerDiv.text('');
+                        });
                 }
             });
 
