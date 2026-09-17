@@ -29,6 +29,8 @@
         <FIELD NAME="pointsperobj" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="1" SEQUENCE="false" COMMENT="Points awarded per objective met"/>
         <FIELD NAME="content_restrict" TYPE="int" LENGTH="1" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1=AI may only use uploaded content files"/>
         <FIELD NAME="completionmessages" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="Minimum student messages required for completion (0=disabled)"/>
+        <FIELD NAME="osce_mode" TYPE="int"  LENGTH="1" NOTNULL="true" DEFAULT="0"  SEQUENCE="false" COMMENT="1=OSCE mode, 0=standard MooChat mode"/>
+        <FIELD NAME="sessiontimelimit" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="300" SEQUENCE="false" COMMENT="OSCE session time limit in seconds"/>
         <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time created"/>
         <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Time modified"/>
       </FIELDS>
