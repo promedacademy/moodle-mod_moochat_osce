@@ -56,7 +56,9 @@ class chat_interface implements renderable, templatable {
         $data->avatarurl = $this->avatarurl ? $this->avatarurl->out(false) : null;
         $data->avatarsize = $this->moochat->avatarsize;
         $data->sizeclass = 'moochat-size-' . $this->moochat->chatsize;
-        
+        $data->osce_mode = !empty($this->moochat->osce_mode);
+        $data->sessiontimelimit = (int)($this->moochat->sessiontimelimit ?? 0);
+        $data->maxmessages = (int)($this->moochat->maxmessages ?? 0);
         // Language strings
         $data->startchat = get_string('startchatwith', 'moochat', $data->name);
         $data->typemessage = get_string('typemessage', 'moochat');
