@@ -77,7 +77,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
             var clearButton   = $('#moochat-clear-'      + moochatid);
             var remainingDiv  = $('#moochat-remaining-'  + moochatid);
             var objectivesDiv = $('#moochat-objectives-' + moochatid);
-
+            var interfaceDiv  = $('#moochat-' + moochatid);
+            osceMode          =  interfaceDiv.data('osce-mode') == 1;
+            sessionTimeLimit  =  parseInt(interfaceDiv.data('session-time-limit'),10) || 0;
+            var timerDiv      =  $('#moochat-osce-timer-' + moochatid);
+    
             // ------------------------------------------------------------------
             // Update the remaining-questions display.
             // ------------------------------------------------------------------
