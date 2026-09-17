@@ -43,9 +43,19 @@ function moochat_add_instance($moochat) {
     if (!isset($moochat->completionmessages)) {
         $moochat->completionmessages = 0;
     }
+
+    if (!isset($moochat->osce_mode)) {
+    $moochat->osce_mode = 0;
+    }
+
+    if (!isset($moochat->sessiontimelimit)) {
+    $moochat->sessiontimelimit = 300;
+    }
+    
     $moochat->id = $DB->insert_record('moochat', $moochat);
     moochat_grade_item_update($moochat);
     return $moochat->id;
+    
 }
 
 /**
@@ -66,6 +76,14 @@ function moochat_update_instance($moochat) {
     }
     if (!isset($moochat->completionmessages)) {
         $moochat->completionmessages = 0;
+    }
+
+    if (!isset($moochat->osce_mode)) {
+    $moochat->osce_mode = 0;
+    }
+
+    if (!isset($moochat->sessiontimelimit)) {
+    $moochat->sessiontimelimit = 300;
     }
     $result = $DB->update_record('moochat', $moochat);
     if ($moochat->grade == 0) {
