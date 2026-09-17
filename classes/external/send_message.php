@@ -150,27 +150,27 @@ class send_message extends external_api {
                 }
         }
 
-/*
- * The current message is already included in history
- * by the JavaScript client.
- */
-if (
-    $maxmessages > 0 &&
-    $userturns > $maxmessages
-) {
-    return [
-        'success' => false,
-        'error' => 'The maximum number of OSCE questions has been reached.',
-        'remaining' => 0,
-        'sessionended' => true,
-        'endreason' => 'maxquestions',
-    ];
-}
-
-        // Build system prompt.
-        $systemprompt = !empty($moochat->systemprompt)
-            ? $moochat->systemprompt
-            : get_string('defaultprompt', 'moochat');
+        /*
+         * The current message is already included in history
+         * by the JavaScript client.
+         */
+        if (
+            $maxmessages > 0 &&
+            $userturns > $maxmessages
+        ) {
+            return [
+                'success' => false,
+                'error' => 'The maximum number of OSCE questions has been reached.',
+                'remaining' => 0,
+                'sessionended' => true,
+                'endreason' => 'maxquestions',
+            ];
+        }
+        
+                // Build system prompt.
+                $systemprompt = !empty($moochat->systemprompt)
+                    ? $moochat->systemprompt
+                    : get_string('defaultprompt', 'moochat');
 
         // ------------------------------------------------------------------
         // Uploaded content files — extract text and inject into prompt.
