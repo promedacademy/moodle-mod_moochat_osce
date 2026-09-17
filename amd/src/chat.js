@@ -29,7 +29,11 @@ define(['jquery', 'core/ajax', 'core/notification', 'core/str'], function($, Aja
          * @param {int} moochatid The moochat instance ID
          */
         init: function(moochatid) {
-
+            var osceMode = false;
+            var sessionTimeLimit = 0;
+            var sessionTimer = null;
+            var sessionEndTime = 0;
+            var sessionEnded = false;
             var conversationHistory = [];
             var remainingQuestions  = -1; // -1 = unlimited
             var hasChattedOnce      = false;
