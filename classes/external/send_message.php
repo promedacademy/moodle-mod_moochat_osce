@@ -38,14 +38,32 @@ require_once($CFG->libdir . '/externallib.php');
 class send_message extends external_api {
 
     public static function execute_parameters() {
-        return new external_function_parameters([
-            'moochatid' => new external_value(PARAM_INT,  'The moochat instance ID'),
-            'message'   => new external_value(PARAM_TEXT, 'The user message'),
-            'history'   => new external_value(PARAM_RAW,  'Conversation history as JSON string'),
+                return new external_function_parameters([
+            'moochatid' => new external_value(
+                PARAM_INT,
+                'The moochat instance ID'
+            ),
+        
+            'message' => new external_value(
+                PARAM_TEXT,
+                'The user message'
+            ),
+        
+            'history' => new external_value(
+                PARAM_RAW,
+                'Conversation history as JSON string'
+            ),
+        
+            'sessionid' => new external_value(
+                PARAM_ALPHANUMEXT,
+                'Client session UUID',
+                VALUE_DEFAULT,
+                ''
+            ),
         ]);
     }
 
-    public static function execute($moochatid, $message, $history) {
+    public static function execute($moochatid, $message, $history, $sessionid = '') {
         global $DB, $USER;
 
         require_once(__DIR__ . '/../../lib.php');
@@ -54,6 +72,7 @@ class send_message extends external_api {
             'moochatid' => $moochatid,
             'message'   => $message,
             'history'   => $history,
+            'sessionid' => $sessionid,
         ]);
 
         $moochat = $DB->get_record('moochat', ['id' => $params['moochatid']], '*', MUST_EXIST);
@@ -120,13 +139,33 @@ class send_message extends external_api {
         }
 
         // Check message limit.
-        $maxmessages = intval($moochat->maxmessages);
-        if ($maxmessages > 0 && count($historyarray) >= ($maxmessages * 2)) {
-            return [
-                'success' => false,
-                'error'   => get_string('maxmessagesreached', 'moochat'),
-            ];
+        $maxmessages = (int)$moochat->maxmessages;
+
+        $userturns = 0;
+
+        foreach ($historyarray as $msg) {
+
+            if (isset($msg['role']) && $msg['role'] === 'user') {
+                $userturns++;
+                }
         }
+
+/*
+ * The current message is already included in history
+ * by the JavaScript client.
+ */
+if (
+    $maxmessages > 0 &&
+    $userturns > $maxmessages
+) {
+    return [
+        'success' => false,
+        'error' => 'The maximum number of OSCE questions has been reached.',
+        'remaining' => 0,
+        'sessionended' => true,
+        'endreason' => 'maxquestions',
+    ];
+}
 
         // Build system prompt.
         $systemprompt = !empty($moochat->systemprompt)
