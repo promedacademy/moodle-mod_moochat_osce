@@ -570,7 +570,7 @@ var startOSCESessionTimer = function() {
             });
 
             // On page load, show initial panel (empty — no prior session to load).
-            if (objectivesDiv.length) {
+            if (objectivesDiv.length && !osceMode) {
                 // Load best-ever score for display even before chatting.
                 Ajax.call([{
                     methodname: 'mod_moochat_check_objectives',
