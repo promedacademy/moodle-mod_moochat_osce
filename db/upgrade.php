@@ -199,5 +199,4 @@ function xmldb_moochat_upgrade($oldversion) {
     }
     return true;
 
-    return true;
 }
